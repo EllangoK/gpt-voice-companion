@@ -1,0 +1,36 @@
+# Compiled Python files
+*.pyc
+__pycache__/
+
+# Python env
+venv/
+env/
+/.venv
+/.env
+
+# IDE files
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+*.egg
+
+# Documentation
+docs/_build/
+doc/api/
+site/
+
+audio/
+conversations/
+config.json
