@@ -2,15 +2,15 @@
 
 A simple bot that allows you to converse with OpenAI's GPT models using ElevenLabs TTS. 
 
-Input is currently only text, but ElevenLabs is used to produce a natural sounding voice.
+Allows for either voice or text input, and responds with a natural ElevenLabs voice.
 
 ![_image_](example.png)
 
-API access for both are required.
+API access for both OpenAI and ElevenLabs are required.
 
 # Installing 
 
-1. Assuming you have python installed, all you need to do is
+1. Assuming you have python installed, to install this run the command below
 
         pip install -r requirements.txt
 
@@ -24,13 +24,20 @@ or copy `.template.env` and rename it `.env`, and fill in the keys there instead
 
     python voice_chat.py
 
-Additional settings can be modified either via passing in the parameter as an arguement, or by modifying `config.json` (Recommended), which is created after the first run.
+Settings can be modified by either passing in the parameter as an argument.
 
-Help and settings can be found by running
+For example to change the name and pass in a custom voice, run it as below
+
+    python voice_chat.py --voice_id ZNJg5cGJHflCKVhOKpjQ --name Ivy
+
+Or, settings can be modified in `config.json` (Recommended), which is created and updated after the first run.
+
+In general help and settings can be found by running
 
     python voice_chat.py -h
 
 # Features
 
-- Can provide a default context to the bot
-- Can name the bot, and adjust various parameters
+- Voice and text input
+- Default context to the bot
+- Name the bot, and adjust various parameters

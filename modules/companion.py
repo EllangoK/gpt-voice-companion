@@ -15,20 +15,19 @@ class Companion:
     AUDIO_PATH = "audio/"
     CONVERSATION_PATH = "conversations/"
 
-    def __init__(self, openai_key: str, elevenlabs_key: str, voice_recog_enabled: bool, chatbot_name: str, openai_model: str = 'gpt-3.5-turbo', openai_temperature: int = 1.2, openai_max_reply_tokens: int = 4000, openai_retry_attempts: int = 3, voice_id: str = None, quiet_logging: bool = True):
-        with OpenAI(openai_key, chatbot_name, openai_model, openai_temperature, openai_max_reply_tokens, openai_retry_attempts) as openai:
-            self.openai = openai
+    def __init__(self, openai_key: str, elevenlabs_key: str, voice_recognition: bool, chatbot_name: str, chatbot_context: str, openai_model: str = 'gpt-3.5-turbo', openai_temperature: int = 1.2, openai_max_reply_tokens: int = 4000, openai_retry_attempts: int = 3, voice_id: str = None, debug: bool = True):
+        self.openai = OpenAI(openai_key, chatbot_name, chatbot_context, openai_model, openai_temperature, openai_max_reply_tokens, openai_retry_attempts)
         self.elevenlabs = ElevenLabsTTS(elevenlabs_key, voice_id=voice_id)
-        self.voice_recog_enabled = voice_recog_enabled
+        self.voice_recognition = voice_recognition
         self.history = ""
 
         ensure_dir_exists(self.AUDIO_PATH)
         ensure_dir_exists(self.CONVERSATION_PATH)
     
-        if quiet_logging:
-            logging.basicConfig(level=logging.CRITICAL)
-        else:
+        if debug:
             logging.basicConfig(level=logging.DEBUG)
+        else:
+            logging.basicConfig(level=logging.CRITICAL)
 
     def get_response(self, history: str, prompt: str) -> str:
         response = self.openai.query_gpt(history, prompt)
@@ -107,8 +106,8 @@ class Companion:
     def loop(self):
         print("Type !h for help")
         print(Fore.YELLOW + f"Context: " + Style.RESET_ALL + "You are talking to a chatbot named " + Fore.BLUE + self.openai.name + Style.RESET_ALL + f", prompted with \"{self.openai.context}\".")
-        
-        if self.voice_recog_enabled:
+
+        if self.voice_recognition:
             self.loop_voice_input()
         else:
             self.loop_text_input()

@@ -1,14 +1,15 @@
 import json
-import requests
 import openai
 import logging
 
 class OpenAI:
     CONFIG_FILENAME = 'config.json'
 
-    def __init__(self, api_key: str, name:str, openai_model: str, temperature: float, max_reply_tokens: int, retry_attempts: int):
+    def __init__(self, api_key: str, name: str, context: str, openai_model: str, temperature: float, max_reply_tokens: int, retry_attempts: int):
         self.api_key = api_key
+        openai.api_key = self.api_key
         self.name = name
+        self.context = context
         self.openai_model = openai_model
         self.temperature = temperature
         self.max_reply_tokens = max_reply_tokens
@@ -21,6 +22,8 @@ class OpenAI:
             self.config = json.load(open(self.CONFIG_FILENAME))
         except FileNotFoundError:
             self.config = {}
+
+        self.save_config()
         self.name = self.config.get('name', self.name)
         self.context = self.config.get('context', "You are an AI assistant. You are talking to a user.")
         self.openai_model = self.config.get('openai_model', self.openai_model)
@@ -39,12 +42,6 @@ class OpenAI:
 
         with open(self.CONFIG_FILENAME, 'w') as f:
             json.dump(self.config, f, indent=4)
-
-    def __enter__(self):
-        return self
-    
-    def __exit__(self, exc_type, exc_value, traceback):
-        self.save_config()
 
     def extract_reply(self, response: str) -> str:
         try:

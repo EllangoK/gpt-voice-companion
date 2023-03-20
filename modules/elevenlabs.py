@@ -6,7 +6,7 @@ import json
 
 class ElevenLabsTTS:
     BASE_URL = "https://api.elevenlabs.io/v1/text-to-speech/"
-    VOICE_ID = "EXAVITQu4vr4xnSDxMaL"
+    VOICE_ID = "EXAVITQu4vr4xnSDxMaL" # Premade ElevenLabs "Bella" Voice
     CONFIG_FILENAME = "config.json"
 
     def __init__(self, key: str, voice_id: str = None):
@@ -14,6 +14,24 @@ class ElevenLabsTTS:
         self.session = requests.Session()
         self.VOICE_ID = voice_id if voice_id else self.VOICE_ID
         self.tts_url = f"{self.BASE_URL}{self.VOICE_ID}"
+
+        self.load_config()
+
+    def load_config(self):
+        try:
+            self.config = json.load(open(self.CONFIG_FILENAME))
+        except FileNotFoundError:
+            self.config = {}
+
+        self.save_config()
+        self.VOICE_ID = self.config.get('voice_id', self.VOICE_ID)
+        self.save_config()
+
+    def save_config(self):
+        self.config['voice_id'] = self.VOICE_ID
+
+        with open(self.CONFIG_FILENAME, 'w') as f:
+            json.dump(self.config, f, indent=4)
 
     def write_audio(self, text: str, base_path: str) -> tuple[bool, str|None]:
         data = {"text": text}
