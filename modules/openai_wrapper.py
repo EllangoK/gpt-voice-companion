@@ -6,12 +6,13 @@ import logging
 class OpenAI:
     CONFIG_FILENAME = 'config.json'
 
-    def __init__(self, api_key: str, name:str, openai_model: str, temperature: float, max_reply_tokens: int):
+    def __init__(self, api_key: str, name:str, openai_model: str, temperature: float, max_reply_tokens: int, retry_attempts: int):
         self.api_key = api_key
         self.name = name
         self.openai_model = openai_model
         self.temperature = temperature
         self.max_reply_tokens = max_reply_tokens
+        self.retry_attempts = retry_attempts
 
         self.load_config()
 
@@ -25,6 +26,7 @@ class OpenAI:
         self.openai_model = self.config.get('openai_model', self.openai_model)
         self.temperature = self.config.get('temperature', self.temperature)
         self.max_reply_tokens = self.config.get('max_reply_tokens', self.max_reply_tokens)
+        self.retry_attempts = self.config.get('retry_attempts', self.retry_attempts)
         self.save_config()
 
     def save_config(self):
@@ -33,6 +35,7 @@ class OpenAI:
         self.config['openai_model'] = self.openai_model
         self.config['temperature'] = self.temperature
         self.config['max_reply_tokens'] = self.max_reply_tokens
+        self.config['retry_attempts'] = self.retry_attempts
 
         with open(self.CONFIG_FILENAME, 'w') as f:
             json.dump(self.config, f, indent=4)

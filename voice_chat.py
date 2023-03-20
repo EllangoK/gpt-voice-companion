@@ -17,6 +17,8 @@ if __name__ == '__main__':
     parser.add_argument('--temperature', help='OpenAI temperature to use (default is 1.2)', default=1.2)
     parser.add_argument('--max_reply_tokens', help='OpenAI max tokens to reply with (default is 200)', default=200)
     parser.add_argument('--voice_id', help='Voice ID for custom ElevenLabs model', default=None)
+    parser.add_argument('--voice_recognition', action='store_true', help='Use voice input', default=True)
+    parser.add_argument('--openai_retry_attempts', help='Number of times to retry OpenAI API calls (default is 3)', default=3)
     args = parser.parse_args()
 
     openai_key, elevenlabs_key = args.openai_key, args.elevenlabs_key
@@ -27,5 +29,5 @@ if __name__ == '__main__':
             parser.print_help()
             exit(1)
 
-    with Companion(openai_key, elevenlabs_key, args.name, args.model, args.temperature, args.max_reply_tokens, args.voice_id, quiet_logging=args.quiet) as companion:
+    with Companion(openai_key, elevenlabs_key, args.voice_recognition, args.name, args.model, args.temperature, args.max_reply_tokens, args.openai_retry_attempts, args.voice_id, quiet_logging=args.quiet) as companion:
         companion.loop()
