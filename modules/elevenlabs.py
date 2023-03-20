@@ -1,8 +1,12 @@
-import requests
 import hashlib
+import json
 import os
 import time
-import json
+
+import requests
+
+from .utils import ensure_dir_exists
+
 
 class ElevenLabsTTS:
     TTS_BASE_URL = "https://api.elevenlabs.io/v1/text-to-speech/"
@@ -45,7 +49,10 @@ class ElevenLabsTTS:
             response = self.session.post(self.tts_url, data=json.dumps(data), headers=headers, timeout=60)
             response.raise_for_status()
             filename = f"{hashlib.sha256((text + str(time.time())).encode('utf-8')).hexdigest()[:10]}.mp3"
-            path = os.path.join(base_path, filename)
+            date = time.strftime("%Y-%m-%d", time.localtime())
+            folder_path = os.path.join(base_path, date)
+            path = os.path.join(folder_path, filename)
+            ensure_dir_exists(folder_path)
             with open(path, 'wb') as f:
                 f.write(response.content)
         except requests.exceptions.RequestException as e:
