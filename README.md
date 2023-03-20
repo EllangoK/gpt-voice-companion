@@ -2,7 +2,13 @@
 
 GPT Voice Companion is an interactive chatbot leveraging OpenAI's GPT models and ElevenLabs TTS (Text-to-Speech) to create a seamless and engaging conversational experience. It supports both voice and text input, while providing responses through a natural-sounding ElevenLabs voice.
 
-![_image_](example.png)
+It can be used either through a GUI (graphical user interface), via gradio
+
+![_image_](gui.png)
+
+or by running it through the CLI (command line interface)
+
+![_image_](cli.png)
 
 To use this application, API access for both OpenAI and ElevenLabs is required.
 
@@ -12,7 +18,7 @@ To use this application, API access for both OpenAI and ElevenLabs is required.
 
         pip install -r requirements.txt
 
-# Use
+# Usage
 
 You can start the chatbot by running the following command:
 
@@ -22,11 +28,12 @@ Alternatively, copy the .template.env file, rename it to .env, and fill in the A
 
     python voice_chat.py
 
-You can modify the settings by either passing them as command-line arguments or by updating the config.json file (recommended). The configuration file is created and updated after the first run.
 
-For example, to change the chatbot's name and use a custom voice, run the following command:
+To launch the GUI, pass in the optional arguement `--gui`
 
-    python voice_chat.py --voice_id ZNJg5cGJHflCKVhOKpjQ --name Ivy
+    python voice_chat.py --gui
+
+Settings can either be passed in as command-line arguments or by read from the config.json file (recommended). The configuration file is created and updated after the first run.
 
 To view available options and settings, run:
 
@@ -34,6 +41,7 @@ To view available options and settings, run:
 
 # Features
 
+- GUI via gradio
 - Voice and text input support
 - Customizable context for the chatbot
 - Ability to name the chatbot and adjust various parameters

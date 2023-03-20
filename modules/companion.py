@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import time
@@ -20,11 +21,13 @@ class Companion:
 
     AUDIO_PATH = "audio/"
     CONVERSATION_PATH = "conversations/"
+    CONFIG_FILENAME = "config.json"
 
-    def __init__(self, openai_key: str, elevenlabs_key: str, voice_recognition: bool, chatbot_name: str, chatbot_context: str, openai_model, openai_temperature: int, openai_max_reply_tokens: int, openai_retry_attempts: int, voice_id: str, debug: bool = True):
+    def __init__(self, openai_key: str, elevenlabs_key: str, voice_recognition: bool, gui: bool, chatbot_name: str, chatbot_context: str, openai_model, openai_temperature: int, openai_max_reply_tokens: int, openai_retry_attempts: int, voice_id: str, debug: bool = True):
         self.openai = OpenAI(openai_key, chatbot_name, chatbot_context, openai_model, openai_temperature, openai_max_reply_tokens, openai_retry_attempts)
         self.elevenlabs = ElevenLabsTTS(elevenlabs_key, voice_id=voice_id)
-        self.voice_recognition = voice_recognition or True
+        self.voice_recognition = voice_recognition
+        self.gui = gui
         self.history = ""
 
         ensure_dir_exists(self.AUDIO_PATH)
@@ -34,6 +37,25 @@ class Companion:
             logging.basicConfig(level=logging.DEBUG)
         else:
             logging.basicConfig(level=logging.CRITICAL)
+        
+        self.load_config()
+
+    def load_config(self):
+        try:
+            self.config = json.load(open(self.CONFIG_FILENAME))
+        except FileNotFoundError:
+            self.config = {}
+
+        self.voice_recognition = self.voice_recognition or self.config.get('voice_recognition') or True
+        self.gui = self.gui or self.config.get('gui') or False
+        self.save_config()
+
+    def save_config(self):
+        self.config['voice_recognition'] = self.voice_recognition
+        self.config['gui'] = self.gui
+
+        with open(self.CONFIG_FILENAME, 'w') as f:
+            json.dump(self.config, f, indent=4)
 
     def get_response(self, prompt: str) -> str:
         response = self.openai.query_gpt(prompt)
@@ -119,8 +141,6 @@ class Companion:
             \"{self.openai.context}\"""")
             chatbot = gr.Chatbot()
             msg = gr.Textbox()
-            global exit_check
-            exit_check = False
             with gr.Row():
                 submit_btn = gr.Button("Submit")
                 clear_btn = gr.Button("Clear")
@@ -144,7 +164,10 @@ class Companion:
                 self.history = ""
                 return None
 
-            def exit():
+            global exit_check
+            exit_check = False
+
+            def exit_func():
                 global exit_check
                 exit_check = True
                 print(Fore.RED + "Exiting..." + Style.RESET_ALL)
@@ -157,7 +180,7 @@ class Companion:
                 bot, chatbot, chatbot
             )
             clear_btn.click(fn=clear_func, inputs=None, outputs=chatbot, queue=False)
-            exit_btn.click(fn=exit, inputs=None, outputs=None, queue=False)
+            exit_btn.click(fn=exit_func, inputs=None, outputs=None, queue=False)
 
         demo.launch(prevent_thread_lock=True)
 
@@ -166,8 +189,8 @@ class Companion:
 
         demo.close()
 
-    def loop(self, gui: bool = False):
-        if gui:
+    def loop(self):
+        if self.gui:
             self.launch_demo()
         else:
             print("Type !h for help")

@@ -34,5 +34,5 @@ if __name__ == '__main__':
             parser.print_help()
             exit(1)
 
-    with Companion(openai_key, elevenlabs_key, args.voice_recognition, args.name, args.context, args.model, args.temperature, args.max_reply_tokens, args.openai_retry_attempts, args.voice_id, debug=args.debug) as companion:
-        companion.loop(gui=args.gui)
+    with Companion(openai_key, elevenlabs_key, args.voice_recognition, args.gui, args.name, args.context, args.model, args.temperature, args.max_reply_tokens, args.openai_retry_attempts, args.voice_id, debug=args.debug) as companion:
+        companion.loop()
