@@ -5,17 +5,18 @@ import time
 import json
 
 class ElevenLabsTTS:
-    BASE_URL = "https://api.elevenlabs.io/v1/text-to-speech/"
-    VOICE_ID = "EXAVITQu4vr4xnSDxMaL" # Premade ElevenLabs "Bella" Voice
+    TTS_BASE_URL = "https://api.elevenlabs.io/v1/text-to-speech/"
+    VOICES_URL = "https://api.elevenlabs.io/v1/voices"
     CONFIG_FILENAME = "config.json"
 
     def __init__(self, key: str, voice_id: str = None):
         self.key = key
         self.session = requests.Session()
-        self.VOICE_ID = voice_id if voice_id else self.VOICE_ID
-        self.tts_url = f"{self.BASE_URL}{self.VOICE_ID}"
+        self.voice_id = voice_id
 
         self.load_config()
+        
+        self.tts_url = f"{self.TTS_BASE_URL}{self.voice_id}"
 
     def load_config(self):
         try:
@@ -23,12 +24,11 @@ class ElevenLabsTTS:
         except FileNotFoundError:
             self.config = {}
 
-        self.save_config()
-        self.VOICE_ID = self.config.get('voice_id', self.VOICE_ID)
+        self.voice_id = self.voice_id or self.config.get('voice_id') or "EXAVITQu4vr4xnSDxMaL" # Premade ElevenLabs "Bella" Voice
         self.save_config()
 
     def save_config(self):
-        self.config['voice_id'] = self.VOICE_ID
+        self.config['voice_id'] = self.voice_id
 
         with open(self.CONFIG_FILENAME, 'w') as f:
             json.dump(self.config, f, indent=4)
@@ -53,3 +53,19 @@ class ElevenLabsTTS:
             return False, None
 
         return True, path
+    
+    def get_voices(self):
+        headers = {
+            "accept": "application/json",
+            "xi-api-key": self.key,
+        }
+
+        try:
+            response = self.session.get(self.VOICES_URL, headers=headers)
+            response.raise_for_status()
+            voices = response.json()
+        except requests.exceptions.RequestException as e:
+            print(f"Error fetching voices: {e}")
+            return []
+
+        return voices

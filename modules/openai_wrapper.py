@@ -23,13 +23,12 @@ class OpenAI:
         except FileNotFoundError:
             self.config = {}
 
-        self.save_config()
-        self.name = self.config.get('name', self.name)
-        self.context = self.config.get('context', "You are an AI assistant. You are talking to a user.")
-        self.openai_model = self.config.get('openai_model', self.openai_model)
-        self.temperature = self.config.get('temperature', self.temperature)
-        self.max_reply_tokens = self.config.get('max_reply_tokens', self.max_reply_tokens)
-        self.retry_attempts = self.config.get('retry_attempts', self.retry_attempts)
+        self.name = self.name or self.config.get('name') or "OpenAI"
+        self.context = self.context or self.config.get('context') or "The following is a conversation with an AI assistant. The assistant is helpful, creative, clever, and very friendly."
+        self.openai_model = self.openai_model or self.config.get('openai_model') or "gpt-3.5-turbo"
+        self.temperature = self.temperature or self.config.get('temperature') or 1.2
+        self.max_reply_tokens = self.max_reply_tokens or self.config.get('max_reply_tokens') or 200
+        self.retry_attempts = self.retry_attempts or self.config.get('retry_attempts') or 3
         self.save_config()
 
     def save_config(self):

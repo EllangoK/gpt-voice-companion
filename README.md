@@ -1,43 +1,41 @@
 # GPT Voice Companion
 
-A simple bot that allows you to converse with OpenAI's GPT models using ElevenLabs TTS. 
-
-Allows for either voice or text input, and responds with a natural ElevenLabs voice.
+GPT Voice Companion is an interactive chatbot leveraging OpenAI's GPT models and ElevenLabs TTS (Text-to-Speech) to create a seamless and engaging conversational experience. It supports both voice and text input, while providing responses through a natural-sounding ElevenLabs voice.
 
 ![_image_](example.png)
 
-API access for both OpenAI and ElevenLabs are required.
+To use this application, API access for both OpenAI and ElevenLabs is required.
 
 # Installing 
 
-1. Assuming you have python installed, to install this run the command below
+1. Ensure you have Python installed. Then, install the required dependencies by running the following command:
 
         pip install -r requirements.txt
 
 # Use
 
-To use this bot, run it with
+You can start the chatbot by running the following command:
 
     python voice_chat.py --openai_key <openapi_key> --elevenlabs_key <elevenlabs_key>
 
-or copy `.template.env` and rename it `.env`, and fill in the keys there instead. Now it can be run as 
+Alternatively, copy the .template.env file, rename it to .env, and fill in the API keys. Now, you can run the chatbot using:
 
     python voice_chat.py
 
-Settings can be modified by either passing in the parameter as an argument.
+You can modify the settings by either passing them as command-line arguments or by updating the config.json file (recommended). The configuration file is created and updated after the first run.
 
-For example to change the name and pass in a custom voice, run it as below
+For example, to change the chatbot's name and use a custom voice, run the following command:
 
     python voice_chat.py --voice_id ZNJg5cGJHflCKVhOKpjQ --name Ivy
 
-Or, settings can be modified in `config.json` (Recommended), which is created and updated after the first run.
-
-In general help and settings can be found by running
+To view available options and settings, run:
 
     python voice_chat.py -h
 
 # Features
 
-- Voice and text input
-- Default context to the bot
-- Name the bot, and adjust various parameters
+- Voice and text input support
+- Customizable context for the chatbot
+- Ability to name the chatbot and adjust various parameters
+- Retry attempts for OpenAI API calls in case of errors or empty responses
+- Audio and conversations are automatically saved in a designated folder

@@ -15,10 +15,10 @@ class Companion:
     AUDIO_PATH = "audio/"
     CONVERSATION_PATH = "conversations/"
 
-    def __init__(self, openai_key: str, elevenlabs_key: str, voice_recognition: bool, chatbot_name: str, chatbot_context: str, openai_model: str = 'gpt-3.5-turbo', openai_temperature: int = 1.2, openai_max_reply_tokens: int = 4000, openai_retry_attempts: int = 3, voice_id: str = None, debug: bool = True):
+    def __init__(self, openai_key: str, elevenlabs_key: str, voice_recognition: bool, chatbot_name: str, chatbot_context: str, openai_model, openai_temperature: int, openai_max_reply_tokens: int, openai_retry_attempts: int, voice_id: str, debug: bool = True):
         self.openai = OpenAI(openai_key, chatbot_name, chatbot_context, openai_model, openai_temperature, openai_max_reply_tokens, openai_retry_attempts)
         self.elevenlabs = ElevenLabsTTS(elevenlabs_key, voice_id=voice_id)
-        self.voice_recognition = voice_recognition
+        self.voice_recognition = voice_recognition or True
         self.history = ""
 
         ensure_dir_exists(self.AUDIO_PATH)
@@ -111,6 +111,9 @@ class Companion:
             self.loop_voice_input()
         else:
             self.loop_text_input()
+
+    def get_voices(self):
+        return self.elevenlabs.get_voices()
 
     def __enter__(self):
         return self
