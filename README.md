@@ -2,7 +2,9 @@
 
 A simple bot that allows you to converse with OpenAI's GPT models using ElevenLabs TTS. 
 
-Input currently only takes in text, but ElevenLabs is used to produce a natural sounding voice.
+Input is currently only text, but ElevenLabs is used to produce a natural sounding voice.
+
+![_image_](example.png)
 
 API access for both are required.
 

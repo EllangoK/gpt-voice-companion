@@ -16,12 +16,15 @@ class OpenAI:
         self.load_config()
 
     def load_config(self):
-        self.config = json.load(open(self.CONFIG_FILENAME))
+        try:
+            self.config = json.load(open(self.CONFIG_FILENAME))
+        except FileNotFoundError:
+            self.config = {}
         self.name = self.config.get('name', self.name)
         self.context = self.config.get('context', "You are an AI assistant. You are talking to a user.")
         self.openai_model = self.config.get('openai_model', self.openai_model)
         self.temperature = self.config.get('temperature', self.temperature)
-        self.max_reply_tokens = self.config.get('max_reply_tokens', self.max_tokens)
+        self.max_reply_tokens = self.config.get('max_reply_tokens', self.max_reply_tokens)
         self.save_config()
 
     def save_config(self):

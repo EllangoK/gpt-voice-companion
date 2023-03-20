@@ -44,6 +44,7 @@ class Companion:
 
     def loop(self):
         print("Type !h for help")
+        print(Fore.YELLOW + f"Context: " + Style.RESET_ALL + "You are talking to a chatbot named " + Fore.BLUE + self.openai.name + Style.RESET_ALL + f", prompted with \"{self.openai.context}\".")
         while True:
             text = input(Fore.GREEN + "You: " + Style.RESET_ALL)
             logging.debug(f"User input: {text}")
@@ -81,5 +82,5 @@ class Companion:
         ensure_dir_exists(folder_path)
         path = os.path.join(folder_path, f"{str(int(time.time()))}.txt")
  
-        with open(path, "w") as f:
+        with open(path, "w", encoding="utf8") as f:
             f.write(self.history)
