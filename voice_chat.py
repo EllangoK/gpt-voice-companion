@@ -23,6 +23,7 @@ if __name__ == '__main__':
     parser.add_argument('--voice_id', help='Voice ID for custom ElevenLabs model (default is c, Bella Premade Voice)')
     parser.add_argument('--voice_recognition', help='Enable voice input')
     parser.add_argument('--openai_retry_attempts', help='Number of times to retry OpenAI API calls (default is 3)')
+    parser.add_argument('--gui', action='store_true', help='Enable GUI (default is False)', default=False)
     args = parser.parse_args()
 
     openai_key, elevenlabs_key = args.openai_key, args.elevenlabs_key
@@ -34,4 +35,4 @@ if __name__ == '__main__':
             exit(1)
 
     with Companion(openai_key, elevenlabs_key, args.voice_recognition, args.name, args.context, args.model, args.temperature, args.max_reply_tokens, args.openai_retry_attempts, args.voice_id, debug=args.debug) as companion:
-        companion.loop()
+        companion.loop(gui=args.gui)

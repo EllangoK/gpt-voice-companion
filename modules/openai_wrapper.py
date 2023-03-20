@@ -51,8 +51,8 @@ class OpenAI:
         except IndexError:
             return response
 
-    def query_gpt(self, history: str, prompt: str) -> str:
-        query = [{'role':'system', 'content': self.context}, {'role':'user', 'content': history + prompt}]
+    def query_gpt(self, prompt: str) -> str:
+        query = [{'role':'system', 'content': self.context}, {'role':'user', 'content': prompt}]
         logging.debug(f"Query: {query}")
         response = openai.ChatCompletion.create(
             model=self.openai_model,

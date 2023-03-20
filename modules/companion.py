@@ -5,6 +5,7 @@ from enum import Enum
 
 import os
 import speech_recognition as sr
+import gradio as gr
 from colorama import Fore, Style, init
 from playaudio import playaudio
 
@@ -13,6 +14,7 @@ from .openai_wrapper import OpenAI
 from .utils import ensure_dir_exists
 
 init(autoreset=True)  # Initialize colorama
+
 
 class Companion:
 
@@ -33,8 +35,8 @@ class Companion:
         else:
             logging.basicConfig(level=logging.CRITICAL)
 
-    def get_response(self, history: str, prompt: str) -> str:
-        response = self.openai.query_gpt(history, prompt)
+    def get_response(self, prompt: str) -> str:
+        response = self.openai.query_gpt(prompt)
         logging.debug(f"Response: {response}")
         return response
 
@@ -61,7 +63,7 @@ class Companion:
                     return ProcessStatus(ProcessInputStatus.LOG, "Commands for text input:\n!q - quit\n!h - help")
 
         for attempt in range(retry_attempts + 1):
-            response = self.get_response(self.history, text)
+            response = self.get_response(self.history + text)
             if len(response.strip()) > 0:
                 break
             if attempt == retry_attempts:
@@ -111,14 +113,70 @@ class Companion:
             elif status.status == ProcessInputStatus.SAY:
                 self.say(status.response)
 
-    def loop(self):
-        print("Type !h for help")
-        print(Fore.YELLOW + f"Context: " + Style.RESET_ALL + "You are talking to a chatbot named " + Fore.BLUE + self.openai.name + Style.RESET_ALL + f", prompted with \"{self.openai.context}\".")
+    def launch_demo(self):
+        with gr.Blocks() as demo:
+            gr.Markdown(f"""## You are talking to a chatbot named {self.openai.name}, prompted with:
+            \"{self.openai.context}\"""")
+            chatbot = gr.Chatbot()
+            msg = gr.Textbox()
+            global exit_check
+            exit_check = False
+            with gr.Row():
+                submit_btn = gr.Button("Submit")
+                clear_btn = gr.Button("Clear")
+                exit_btn = gr.Button("Exit")
 
-        if self.voice_recognition:
-            self.loop_voice_input()
+            def user(user_message, chatbot_dialogue):
+                return "", chatbot_dialogue + [[user_message, None]]
+
+            def bot(chatbot_dialogue):
+                status = self.process_input(chatbot_dialogue[-1][0])
+                if status.status == ProcessInputStatus.EXIT:
+                    pass
+                elif status.status == ProcessInputStatus.LOG:
+                    pass
+                elif status.status == ProcessInputStatus.SAY:
+                    self.say(status.response)
+                chatbot_dialogue[-1][1] = status.response
+                return chatbot_dialogue
+            
+            def clear_func():
+                self.history = ""
+                return None
+
+            def exit():
+                global exit_check
+                exit_check = True
+                print(Fore.RED + "Exiting..." + Style.RESET_ALL)
+                return None
+
+            msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
+                bot, chatbot, chatbot
+            )
+            submit_btn.click(user, [msg, chatbot], [msg, chatbot], queue=False).then(
+                bot, chatbot, chatbot
+            )
+            clear_btn.click(fn=clear_func, inputs=None, outputs=chatbot, queue=False)
+            exit_btn.click(fn=exit, inputs=None, outputs=None, queue=False)
+
+        demo.launch(prevent_thread_lock=True)
+
+        while not exit_check:
+            time.sleep(0.5)
+
+        demo.close()
+
+    def loop(self, gui: bool = False):
+        if gui:
+            self.launch_demo()
         else:
-            self.loop_text_input()
+            print("Type !h for help")
+            print(Fore.YELLOW + f"Context: " + Style.RESET_ALL + "You are talking to a chatbot named " + Fore.BLUE + self.openai.name + Style.RESET_ALL + f", prompted with \"{self.openai.context}\".")
+
+            if self.voice_recognition:
+                self.loop_voice_input()
+            else:
+                self.loop_text_input()
 
     def get_voices(self):
         return self.elevenlabs.get_voices()
