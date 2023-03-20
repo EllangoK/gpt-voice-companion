@@ -1,7 +1,10 @@
-import os
 import argparse
+import os
+
 from dotenv import load_dotenv
+
 from modules.companion import Companion
+
 
 def load_keys_from_env():
     load_dotenv()

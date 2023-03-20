@@ -1,12 +1,16 @@
-from colorama import Fore, Style, init
-from .utils import ensure_dir_exists
-from .openai_wrapper import OpenAI
-from .elevenlabs import ElevenLabsTTS
-from playaudio import playaudio
 import logging
+import os
 import time
+from enum import Enum
+
 import os
 import speech_recognition as sr
+from colorama import Fore, Style, init
+from playaudio import playaudio
+
+from .elevenlabs import ElevenLabsTTS
+from .openai_wrapper import OpenAI
+from .utils import ensure_dir_exists
 
 init(autoreset=True)  # Initialize colorama
 
@@ -46,44 +50,41 @@ class Companion:
     def process_input(self, text: str, is_voice: bool = False, retry_attempts: int = 3):
         if is_voice:
             if text.lower() == "exit":
-                return False
+                return ProcessStatus(ProcessInputStatus.EXIT, None)
             elif text.lower() == "help":
-                print("Commands for voice input:")
-                print("exit - quit")
-                print("help - help")
-                return True
+                return ProcessStatus(ProcessInputStatus.LOG, "Commands for voice input:\nexit - quit\nhelp - help")
         else:
             if text.startswith("!"):
                 if text[1].lower() == "q":
-                    return False
+                    return ProcessStatus(ProcessInputStatus.EXIT, None)
                 elif text[1].lower() == "h":
-                    print("Commands for text input:")
-                    print("!q - quit")
-                    print("!h - help")
-                    return True
+                    return ProcessStatus(ProcessInputStatus.LOG, "Commands for text input:\n!q - quit\n!h - help")
 
         for attempt in range(retry_attempts + 1):
             response = self.get_response(self.history, text)
             if len(response.strip()) > 0:
                 break
             if attempt == retry_attempts:
-                print(Fore.RED + "Error: " + Style.RESET_ALL + "No response from chatbot.")
-                return True
+                return ProcessStatus(ProcessInputStatus.LOG, (Fore.RED + "Error: " + Style.RESET_ALL + "No response from chatbot."))
             logging.debug(f"Retry attempt {attempt + 1}")
 
-        self.say(response)
         self.history += f"User: {text} \n{self.openai.name}: {response} \n"
         logging.debug(f"History: {self.history}")
 
-        time.sleep(2)
-        return True
+        return ProcessStatus(ProcessInputStatus.SAY, response)
 
     def loop_text_input(self):
         while True:
-            text = input(Fore.GREEN + "You: " + Style.RESET_ALL)
-            logging.debug(f"User input: {text}")
-            if not self.process_input(text):
+            user_input = input(Fore.GREEN + "You: " + Style.RESET_ALL)
+            logging.debug(f"User input: {user_input}")
+
+            status = self.process_input(user_input)
+            if status.status == ProcessInputStatus.EXIT:
                 break
+            elif status.status == ProcessInputStatus.LOG:
+                print(status.response)
+            elif status.status == ProcessInputStatus.SAY:
+                self.say(status.response)
 
     def loop_voice_input(self):
         recognizer = sr.Recognizer()
@@ -92,16 +93,23 @@ class Companion:
                 print("Listening...")
                 audio = recognizer.listen(source)
                 try:
-                    text = recognizer.recognize_google(audio)
-                    print(Fore.GREEN + "You: " + Style.RESET_ALL + text)
+                    user_input = recognizer.recognize_google(audio)
+                    logging.debug(f"Audio user input: {user_input}")
+                    print(Fore.GREEN + "You: " + Style.RESET_ALL + user_input)
                 except sr.UnknownValueError:
                     print(Fore.RED + "Error: " + Style.RESET_ALL + "Could not understand the audio.")
                     continue
                 except sr.RequestError:
                     print(Fore.RED + "Error: " + Style.RESET_ALL + "Could not request results from Google Speech Recognition service.")
                     continue
-            if not self.process_input(text, is_voice=True):
+
+            status = self.process_input(user_input, is_voice=True)
+            if status.status == ProcessInputStatus.EXIT:
                 break
+            elif status.status == ProcessInputStatus.LOG:
+                print(status.response)
+            elif status.status == ProcessInputStatus.SAY:
+                self.say(status.response)
 
     def loop(self):
         print("Type !h for help")
@@ -129,3 +137,14 @@ class Companion:
  
         with open(path, "w", encoding="utf8") as f:
             f.write(self.history)
+
+class ProcessInputStatus(Enum):
+    SAY = 0
+    LOG = 1
+    EXIT = 2
+
+class ProcessStatus:
+
+    def __init__(self, status: ProcessInputStatus, data: str = None):
+        self.status = status
+        self.response = data

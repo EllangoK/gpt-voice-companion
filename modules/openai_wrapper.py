@@ -1,6 +1,9 @@
 import json
-import openai
 import logging
+from enum import Enum
+
+import openai
+
 
 class OpenAI:
     CONFIG_FILENAME = 'config.json'
@@ -62,3 +65,6 @@ class OpenAI:
         text = response['choices'][0]['message']['content']
 
         return self.extract_reply(text)
+    
+    def list_models(self):
+        return openai.Model.list()
