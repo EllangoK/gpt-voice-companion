@@ -11,6 +11,7 @@ from playaudio import playaudio
 
 from modules.config_manager import ConfigManager
 from modules.elevenlabs import ElevenLabsTTS
+from modules.history_manager import HistoryEntry, HistoryManager
 from modules.openai_wrapper import OpenAI
 from modules.utils import ensure_dir_exists
 
@@ -32,7 +33,7 @@ class Companion:
         self.load_config()
         self.openai = OpenAI(args_dict)
         self.elevenlabs = ElevenLabsTTS(args_dict)
-        self.history = ""
+        self.history_manager = HistoryManager()
 
         ensure_dir_exists(self.AUDIO_PATH)
         ensure_dir_exists(self.CONVERSATION_PATH)
@@ -58,6 +59,7 @@ class Companion:
 
     def say(self, text: str):
         success, audio_path = self.elevenlabs.write_audio(text, self.AUDIO_PATH)
+        self.history_manager.add_audio_path_to_last_entry(audio_path, False)
         logging.debug(f"Audio path: {audio_path}")
         if success:
             print(Fore.BLUE + f"{self.openai.name}: " + Style.RESET_ALL + text)
@@ -79,15 +81,17 @@ class Companion:
                     return ProcessStatus(ProcessInputStatus.LOG, "Commands for text input:\n!q - quit\n!h - help")
 
         for attempt in range(retry_attempts + 1):
-            response = self.get_response(self.history + text)
+            response = self.get_response(self.history_manager.to_str() + text)
             if len(response.strip()) > 0:
                 break
             if attempt == retry_attempts:
                 return ProcessStatus(ProcessInputStatus.LOG, (Fore.RED + "Error: " + Style.RESET_ALL + "No response from chatbot."))
             logging.debug(f"Retry attempt {attempt + 1}")
 
-        self.history += f"User: {text} \n{self.openai.name}: {response} \n"
-        logging.debug(f"History: {self.history}")
+        user_entry = HistoryEntry(f"User: {text}", None)
+        ai_entry = HistoryEntry(f"{self.openai.name}: {response}", None)
+        self.history_manager.add_entry(user_entry, ai_entry)
+        logging.debug(f"History: {self.history_manager.to_str()}")
 
         return ProcessStatus(ProcessInputStatus.SAY, response)
 
@@ -129,12 +133,12 @@ class Companion:
             elif status.status == ProcessInputStatus.SAY:
                 self.say(status.response)
 
-    def launch_demo(self):
-        with gr.Blocks() as demo:
+    def chatbot_tab(self):
+        with gr.Tab("Chatbot"):
             gr.Markdown(f"""## You are talking to a chatbot named {self.openai.name}, prompted with:
             \"{self.openai.context}\"""")
-            chatbot = gr.Chatbot()
-            msg = gr.Textbox()
+            chatbot = gr.Chatbot(label=self.openai.name)
+            text_input = gr.Textbox(show_label=False)
             with gr.Row():
                 submit_btn = gr.Button("Submit")
                 clear_btn = gr.Button("Clear")
@@ -145,17 +149,13 @@ class Companion:
 
             def bot(chatbot_dialogue):
                 status = self.process_input(chatbot_dialogue[-1][0])
-                if status.status == ProcessInputStatus.EXIT:
-                    pass
-                elif status.status == ProcessInputStatus.LOG:
-                    pass
-                elif status.status == ProcessInputStatus.SAY:
+                if status.status == ProcessInputStatus.SAY:
                     self.say(status.response)
                 chatbot_dialogue[-1][1] = status.response
                 return chatbot_dialogue
             
             def clear_func():
-                self.history = ""
+                self.history_manager.clear()
                 return None
 
             global exit_check
@@ -167,14 +167,25 @@ class Companion:
                 print(Fore.RED + "Exiting..." + Style.RESET_ALL)
                 return None
 
-            msg.submit(user, [msg, chatbot], [msg, chatbot], queue=False).then(
+            text_input.submit(user, [text_input, chatbot], [text_input, chatbot], queue=False).then(
                 bot, chatbot, chatbot
             )
-            submit_btn.click(user, [msg, chatbot], [msg, chatbot], queue=False).then(
+            submit_btn.click(user, [text_input, chatbot], [text_input, chatbot], queue=False).then(
                 bot, chatbot, chatbot
             )
             clear_btn.click(fn=clear_func, inputs=None, outputs=chatbot, queue=False)
             exit_btn.click(fn=exit_func, inputs=None, outputs=None, queue=False)
+
+    def conversation_explorer_tab(self):
+        with gr.Tab("Conversation Explorer"):
+            pass
+
+    def launch_demo(self):
+        global exit_check
+
+        with gr.Blocks(title="Voice Assistant") as demo:
+            self.chatbot_tab()
+            self.conversation_explorer_tab()
 
         demo.launch(prevent_thread_lock=True)
 
@@ -208,10 +219,10 @@ class Companion:
         date = time.strftime("%Y-%m-%d", time.localtime())
         folder_path = os.path.join(self.CONVERSATION_PATH, date)
         ensure_dir_exists(folder_path)
-        path = os.path.join(folder_path, f"{str(int(time.time()))}.txt")
+        path = os.path.join(folder_path, f"{str(int(time.time()))}.json")
  
         with open(path, "w", encoding="utf8") as f:
-            f.write(self.history)
+            f.write(self.history_manager.to_json())
 
 class ProcessInputStatus(Enum):
     SAY = 0

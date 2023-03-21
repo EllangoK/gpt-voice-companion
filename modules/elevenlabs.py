@@ -56,7 +56,7 @@ class ElevenLabsTTS:
             print(f"Error generating speech: {e}")
             return False, None
 
-        return True, path
+        return True, os.path.abspath(path)
     
     def get_voices(self):
         headers = {

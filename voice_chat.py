@@ -23,7 +23,9 @@ if __name__ == '__main__':
     parser.add_argument('--voice_id', help='Voice ID for custom ElevenLabs model (default is c, Bella Premade Voice)')
     parser.add_argument('--voice_recognition', help='Enable voice input')
     parser.add_argument('--openai_retry_attempts', help='Number of times to retry OpenAI API calls (default is 3)')
-    parser.add_argument('--gui', action='store_true', help='Enable GUI (default is False)', default=False)
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('--gui', action='store_true', help='Enable the GUI', default=True)
+    group.add_argument('--no-gui', dest='gui', action='store_false', help='Disable the GUI')
     args = parser.parse_args()
 
     openai_api_key, elevenlabs_api_key = args.openai_api_key, args.elevenlabs_api_key
