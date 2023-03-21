@@ -5,43 +5,40 @@ import time
 
 import requests
 
+from modules.config_manager import ConfigManager
+
 from .utils import ensure_dir_exists
 
 
 class ElevenLabsTTS:
     TTS_BASE_URL = "https://api.elevenlabs.io/v1/text-to-speech/"
     VOICES_URL = "https://api.elevenlabs.io/v1/voices"
-    CONFIG_FILENAME = "config.json"
 
-    def __init__(self, key: str, voice_id: str = None):
-        self.key = key
-        self.session = requests.Session()
-        self.voice_id = voice_id
+    DEFAULTS = {
+       'voice_id': "EXAVITQu4vr4xnSDxMaL"  # Premade ElevenLabs "Bella" Voice
+    }
 
+    def __init__(self, env: dict):
+        self.config_manager = ConfigManager(env, self.DEFAULTS)
         self.load_config()
+        self.session = requests.Session()
         
         self.tts_url = f"{self.TTS_BASE_URL}{self.voice_id}"
 
     def load_config(self):
-        try:
-            self.config = json.load(open(self.CONFIG_FILENAME))
-        except FileNotFoundError:
-            self.config = {}
-
-        self.voice_id = self.voice_id or self.config.get('voice_id') or "EXAVITQu4vr4xnSDxMaL" # Premade ElevenLabs "Bella" Voice
+        self.elevenlabs_api_key = self.config_manager['elevenlabs_api_key']
+        self.voice_id = self.config_manager['voice_id']
         self.save_config()
 
     def save_config(self):
-        self.config['voice_id'] = self.voice_id
-
-        with open(self.CONFIG_FILENAME, 'w') as f:
-            json.dump(self.config, f, indent=4)
+        self.config_manager['elevenlabs_api_key'] = self.elevenlabs_api_key
+        self.config_manager['voice_id'] = self.voice_id
 
     def write_audio(self, text: str, base_path: str) -> tuple[bool, str|None]:
         data = {"text": text}
         headers = {
             "accept": "audio/mpeg",
-            "xi-api-key": self.key,
+            "xi-api-key": self.elevenlabs_api_key,
             "Content-Type": "application/json",
         }
 
@@ -64,7 +61,7 @@ class ElevenLabsTTS:
     def get_voices(self):
         headers = {
             "accept": "application/json",
-            "xi-api-key": self.key,
+            "xi-api-key": self.elevenlabs_api_key,
         }
 
         try:

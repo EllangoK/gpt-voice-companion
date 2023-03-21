@@ -4,15 +4,15 @@ import os
 import time
 from enum import Enum
 
-import os
-import speech_recognition as sr
 import gradio as gr
+import speech_recognition as sr
 from colorama import Fore, Style, init
 from playaudio import playaudio
 
-from .elevenlabs import ElevenLabsTTS
-from .openai_wrapper import OpenAI
-from .utils import ensure_dir_exists
+from modules.config_manager import ConfigManager
+from modules.elevenlabs import ElevenLabsTTS
+from modules.openai_wrapper import OpenAI
+from modules.utils import ensure_dir_exists
 
 init(autoreset=True)  # Initialize colorama
 
@@ -21,13 +21,17 @@ class Companion:
 
     AUDIO_PATH = "audio/"
     CONVERSATION_PATH = "conversations/"
-    CONFIG_FILENAME = "config.json"
 
-    def __init__(self, openai_key: str, elevenlabs_key: str, voice_recognition: bool, gui: bool, chatbot_name: str, chatbot_context: str, openai_model, openai_temperature: int, openai_max_reply_tokens: int, openai_retry_attempts: int, voice_id: str, debug: bool = True):
-        self.openai = OpenAI(openai_key, chatbot_name, chatbot_context, openai_model, openai_temperature, openai_max_reply_tokens, openai_retry_attempts)
-        self.elevenlabs = ElevenLabsTTS(elevenlabs_key, voice_id=voice_id)
-        self.voice_recognition = voice_recognition
-        self.gui = gui
+    DEFAULTS = {
+        'voice_recognition': True,
+        'gui': False
+    }
+
+    def __init__(self, args_dict: dict, debug: bool = True):
+        self.config_manager = ConfigManager(args_dict, self.DEFAULTS)
+        self.load_config()
+        self.openai = OpenAI(args_dict)
+        self.elevenlabs = ElevenLabsTTS(args_dict)
         self.history = ""
 
         ensure_dir_exists(self.AUDIO_PATH)
@@ -37,25 +41,15 @@ class Companion:
             logging.basicConfig(level=logging.DEBUG)
         else:
             logging.basicConfig(level=logging.CRITICAL)
-        
-        self.load_config()
 
     def load_config(self):
-        try:
-            self.config = json.load(open(self.CONFIG_FILENAME))
-        except FileNotFoundError:
-            self.config = {}
-
-        self.voice_recognition = self.voice_recognition or self.config.get('voice_recognition') or True
-        self.gui = self.gui or self.config.get('gui') or False
+        self.voice_recognition = self.config_manager['voice_recognition']
+        self.gui = self.config_manager['gui']
         self.save_config()
 
     def save_config(self):
-        self.config['voice_recognition'] = self.voice_recognition
-        self.config['gui'] = self.gui
-
-        with open(self.CONFIG_FILENAME, 'w') as f:
-            json.dump(self.config, f, indent=4)
+        self.config_manager['voice_recognition'] = self.voice_recognition
+        self.config_manager['gui'] = self.gui
 
     def get_response(self, prompt: str) -> str:
         response = self.openai.query_gpt(prompt)
